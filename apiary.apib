@@ -1,1325 +1,205 @@
 FORMAT: 1A
+HOST: http://pwaforum.apiblueprint.org/
 
-# account-json-api
+# Forum API
 
-An implementation of a [JSON-API v1](http://jsonapi.org/) RESTful interface for
-all things user accounts and sessions.
+API for PWA discussion forum.
 
-Send your pull-requests to https://github.com/hoodiehq/account-json-api
+# Data Structures
 
-## Query parameters
+## Accounts (object)
++ userid: 1 (number, required)
++ username: user1 (string, required)
++ firstname: xxx (string)
++ lastname: xxx (string)
++ email: xxx@xxx.com (string, required)
++ password: pswd (string, required)
++ confirmpasswd: pswd (string, required)
++ ismale: true (boolean)
++ phone: 123456789 (string)
++ country: xxx (string)
++ city: xxx (string)
++ age: 30 (string)
++ interests: xxx (string)
++ info: xxx (string)
 
-All routes support query parameters to refine responses
+## Themes (object)
++ themeid: 1 (number, required)
++ themename: theme (string, required)
++ description: xxx (string)
++ createdby: user (string, required)
++ createdat: `2014-11-11T08:40:51.620Z` (string)
 
-- **[include](http://jsonapi.org/format/#fetching-relationships)**,
-  e.g. `GET /session?include=account.profile` to include properties of the
-  profile relationship
-- **[fields](http://jsonapi.org/format/#fetching-sparse-fieldsets)**,
-  e.g. `GET /session?fields[account]=username` to only return the username
-  of the account relationship
-- **[sort](http://jsonapi.org/format/#fetching-sorting)**,
-  e.g. `GET /accounts?sort=username` to sort all accounts ascending by name
-- **[page](http://jsonapi.org/format/#fetching-pagination)**,
-  e.g. `GET /accounts?page[number]=1&page[size]=10` to return only the first
-  10 accounts
-- **[filter](http://jsonapi.org/format/#fetching-filtering)**,
-  The `filter` is not defined by JSON API. Implementations must specify if how
-  the `filter` query parameter is supported.
+## Posts (object)
++ postid: 1 (number, required)
++ content: xxx (string, required)
++ themeid: 1 (number, required)
++ addedby: user (string, required)
++ addedat: `2014-11-11T08:40:51.620Z` (string)
 
-## Group Current User
+## Responses (object)
++ responseid: 1 (number, required)
++ rcontent: xxx (string, required)
++ rootid: 1 (number, required)
++ addedby: user (string, required)
++ addedat: `2014-11-11T08:40:51.620Z` (string)
 
-## Session [/session]
+# Accounts [/accounts]
 
-The session resource allows users to sign in, sign out and to check their
-current session status.
+## Retrieve All Accounts [GET]
++ Response 200 (application/json)
+    + Attributes (array[Accounts])
 
-A user can have several open sessions at the same time.
-
-If the session identified by the Authorization header can't be found, a
-`401` error is returned (see discussion about error status codes in
-https://twitter.com/gr2m/status/697804572623007744)
-
-### Sign In [PUT]
-
-+ Request (application/vnd.api+json)
-
+## Add new Account [POST]
++ Request (application/json)
+    + Attributes([Accounts])
++ Response 201 (application/json)
     + Headers
-
-            Accept: application/vnd.api+json
-
+    
+            Location: /accounts/2
+            
     + Body
-
-            {
-                "data": {
-                    "type": "session",
-                    "attributes": {
-                        "username": "john-doe",
-                        "password": "secret"
-                    }
-                }
-            }
-
-+ Response 201 (application/vnd.api+json)
-
-    + Headers
-
-            Location: https://example.com/session
-
-    + Body
-
-            {
-                "links": {
-                    "self": "https://example.com/session"
-                },
-                "data": {
-                    "id": "sessionid123",
-                    "type": "session",
-                    "relationships": {
-                        "account": {
-                            "links": {
-                                "related": "https://example.com/session/account"
-                            },
-                            "data": {
-                                "id": "abc1234",
-                                "type": "account"
-                            }
-                        }
-                    }
-                },
-                "included": [{
-                    "id": "abc1234",
-                    "type": "account",
-                    "attributes": {
-                        "username": "jane-doe"
-                    },
-                    "relationships": {
-                        "profile": {
-                            "links": {
-                                "related": "https://example.com/session/account/profile"
-                            },
-                            "data": {
-                                "id": "abc1234-profile",
-                                "type": "profile"
-                            }
-                        }
-                    }
-                }]
-            }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Invalid credentials"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "data.type must be 'session'"
-            }]
-        }
-
-+ Response 403 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "403",
-                "title": "Forbidden",
-                "detail": "Authorization header not allowed"
-            }]
-        }
-
-### Check session [GET]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/session"
-            },
-            "data": {
-                "id": "sessionid123",
-                "type": "session",
-                "relationships": {
-                    "account": {
-                        "links": {
-                            "related": "https://example.com/session/account"
-                        },
-                        "data": {
-                            "id": "abc1234",
-                            "type": "account"
-                        }
-                    }
-                }
-            },
-            "included": [{
-                "id": "abc1234",
-                "type": "account",
-                "attributes": {
-                    "username": "jane-doe"
-                },
-                "relationships": {
-                    "profile": {
-                        "links": {
-                            "related": "https://example.com/session/account/profile"
-                        },
-                        "data": {
-                            "id": "abc1234-profile",
-                            "type": "profile"
-                        }
-                    }
-                }
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Sign Out [DELETE]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 204
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-## Account [/session/account]
-
-The User account resource allows users to sign up, get
-or set account properties or destroy their accounts.
-
-### Sign Up [PUT /session/account]
-
-+ Request (application/vnd.api+json)
-
-    + Headers
-
-            Accept: application/vnd.api+json
-
-    + Attributes (object)
-        + data (object, required)
-            + type (string, required)
-            + attributes (object, required) - may contain the properties below as well as any others that should be included
-                + username (string)
-                + password (string)
-            + id (string) - the server may accept a client-generated id along with the request
-
-    + Body
-
-            {
-                "data": {
-                    "type": "account",
-                    "id": "abc4567"
-                    "attributes": {
-                        "username": "john-doe",
-                        "password": "secret",
-                        "createdAt": "2016-10-02T04:07:20.243Z"
-                    }
-                }
-            }
-
-+ Response 201 (application/vnd.api+json)
-
-    + Headers
-
-            Location: https://example.com/session/account
-
-    + Body
-
-            {
-                "links": {
-                    "self": "https://example.com/session/account"
-                },
-                "data": {
-                    "id": "abc4567",
-                    "type": "account",
-                    "attributes": {
-                        "username": "john-doe"
-                    },
-                    "relationships": {
-                        "profile": {
-                            "links": {
-                                "related": "https://example.com/session/account/profile"
-                            },
-                            "data": {
-                                "id": "abc4567-profile",
-                                "type": "profile"
-                            }
-                        }
-                    }
-                }
-            }
-
-+ Response 403 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "403",
-                "title": "Forbidden",
-                "detail": "Authorization header not allowed"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "An account with that username already exists"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "data.type must be 'account'"
-            }]
-        }
-
-### Fetch [GET /session/account]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/session/account"
-            },
-            "data": {
-                "id": "abc4567",
-                "type": "account",
-                "attributes": {
-                    "username": "john-doe"
-                },
-                "relationships": {
-                    "profile": {
-                        "links": {
-                            "related": "https://example.com/session/account/profile"
-                        },
-                        "data": {
-                            "id": "abc4567-profile",
-                            "type": "profile"
-                        }
-                    }
-                }
-            }
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Update [PATCH]
-
-+ Request (application/vnd.api+json)
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-    + Body
-
-            {
-                "data": {
-                    "id": "def678",
-                    "type": "account",
-                    "attributes": {
-                        "password": "newsecret"
-                    }
-                }
-            }
-
-+ Response 204
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "data.type must be 'account'"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "data.id must be '{id}'"
-            }]
-        }
-
-### Close [DELETE]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 204
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-
-## Profile [/session/account/profile]
-
-All custom user data is stored in the profile.
-
-Every account has an associated profile, by default, an empty one
-is created when creating the account.
-
-### Fetch [GET]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/session/account/profile"
-            },
-            "data": {
-                "id": "abc123-profile",
-                "type": "profile",
-                "attributes": {
-                    "fullName": "Jane Doe"
-                }
-            }
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Update [PATCH]
-
-+ Request (application/vnd.api+json)
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-    + Body
-
-            {
-                "data": {
-                    "id": "abc123-profile",
-                    "type": "profile",
-                    "attributes": {
-                        "property": "new value"
-                    }
-                }
-            }
-
-+ Response 204
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "'type' and 'id' provided don't match any existing document"
-            }]
-        }
-
-## Group Requests
-
-
-Requests can be used for things like account confirmation, password resets
-or account ugrades, which require app-specific workflows.
-
-Authentication might or might not be needed, depending on the type of request.
-
-## Request Collection [/requests]
-
-A user can only see own requests. An admin can see all requests across accounts.
-
-### List all [GET]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/requests",
-                "first": "https://example.com/requests",
-                "last": "https://example.com/requests?page=2",
-                "next": "https://example.com/requests?page=2"
-            },
-            "data": [
-                {
-                    "id": "1234",
-                    "type": "request",
-                    "links": {
-                        "self": "https://example.com/requests/1234"
-                    },
-                    "attributes": {
-                        "type": "passwordreset",
-                        "email": "john@example.com",
-                        "expires": "2015-07-20T10:00:00-04:00"
-                    }
-                },
-                {
-                    "id": "2345",
-                    "type": "request",
-                    "links": {
-                      "self": "https://example.com/requests/2345"
-                    },
-                    "attributes": {
-                        "type": "usernamereminder",
-                        "email": "jane@example.com",
-                        "expires": "2015-07-20T15:00:00-04:00"
-                    }
-                }
-            ]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Create [POST]
-
-+ Request (application/vnd.api+json)
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-    + Body
-
-            {
-                "data": {
-                    "type": "request",
-                    "attributes": {
-                        "type": "passwordreset",
-                        "email": "john@example.com"
-                    }
-                }
-            }
-
-+ Response 201 (application/vnd.api+json)
-
-    + Headers
-
-            Location: https://example.com/requests/1234
-
-    + Body
-
-            {
-                "links": {
-                    "self": "https://example.com/requests/1234"
-                },
-                "data": {
-                    "id": "1234",
-                    "type": "request",
-                    "attributes": {
-                        "type": "passwordreset",
-                        "email": "john@example.com",
-                        "expires": "2015-07-20T15:00:00-04:00"
-                    }
-                }
-            }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "data.type must be 'request'"
-            }]
-        }
-
-+ Response 403 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "403",
-                "title": "Forbidden",
-                "detail": "Unknown request type"
-            }]
-        }
-
-
-## Request [/requests/{id}]
-
-`DELETE` always requires authentication and is restricted to admins.
-
-`GET` makes sense for users to check for errors that might have occured after
-creating a request, like an error during password reset delivery. It might or
-might not require authentication, depending on the type of request.
+    
+            + Attributes
+                + userid: 2 (number, required)
+                + username: user2 (string, required)
+                + email: xxx@xxx.com (string, required)
+                + password: psw (string, required)
+                + confirmpasswd: psw (string, required)
+                + ismale: true (boolean)
+
+## Concrete Account [/accounts/{id}]
 
 + Parameters
-    + id: 1234 (required, string) - request id
+    + id
 
-### Fetch [GET]
+### Retrieve Account[GET]
++ Response 200 (application/json)
+    + Attributes (Accounts)
 
-+ Request
+### Edit Account [PUT]
++ Request (application/json)
+    + Attributes([Accounts])
++ Response 204 
 
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/requests/1234"
-            },
-            "data": {
-                "id": "1234",
-                "type": "request",
-                "attributes": {
-                    "type": "passwordreset",
-                    "email": "john@example.com",
-                    "expires": "2015-07-20T15:00:00-04:00"
-                }
-            }
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Delete [DELETE]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
+### Delete Account [DELETE]
 + Response 204
 
-+ Response 401 (application/vnd.api+json)
+# Themes [/themes]
 
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
+## Retrieve All Themes [GET]
++ Response 200 (application/json)
+    + Attributes (array[Themes])
 
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-## Group Admins
-
-
-## User Account Collection [/accounts]
-
-Admins can fetch and manage all user accounts and their profile properties.
-
-### Create [POST]
-
-+ Request (application/vnd.api+json)
-
+## Add new Theme [POST]
++ Request (application/json)
+    + Attributes([Themes])
++ Response 201 (application/json)
     + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
+    
+            Location: /themes/2
+            
     + Body
+    
+            + Attributes
+                + themeid: 2 (number, required)
+                + themename: theme2 (string, required)
+                + createdby: user (string, required)
+                + createdat: `2014-11-11T08:40:51.620Z` (string)
 
-            {
-                "data": {
-                    "type": "account",
-                    "attributes": {
-                        "username": "jane-doe",
-                        "password": "secret"
-                    }
-                }
-            }
-
-+ Response 201 (application/vnd.api+json)
-
-    + Headers
-
-            Location: https://example.com/accounts/abc4567
-
-    + Body
-
-            {
-                "links": {
-                    "self": "https://example.com/accounts/abc4567"
-                },
-                "data": {
-                    "id": "abc4567",
-                    "type": "account",
-                    "attributes": {
-                        "username": "jane-doe"
-                    },
-                    "relationships": {
-                        "profile": {
-                            "links": {
-                                "related": "https://example.com/accounts/abc4567/profile"
-                            },
-                            "data": {
-                                "id": "abc4567-profile",
-                                "type": "profile",
-                            }
-                        }
-                    }
-                }
-            }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "data.type must be 'account'"
-            }]
-        }
-
-### List all [GET]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/accounts",
-                "first": "https://example.com/accounts",
-                "last": "https://example.com/accounts?page=2",
-                "next": "https://example.com/accounts?page=2"
-            },
-            "data": [
-                {
-                    "id": "abc4567",
-                    "type": "account",
-                    "links": {
-                        "self": "https://example.com/accounts/abc4567"
-                    },
-                    "attributes": {
-                        "username": "jane-doe"
-                    },
-                    "relationships": {
-                        "profile": {
-                            "links": {
-                                "related": "https://example.com/accounts/abc4567/profile"
-                            },
-                            "data": {
-                                "id": "abc4567-profile",
-                                "type": "profile"
-                            }
-                        }
-                    }
-                },
-                {
-                    "id": "def678",
-                    "type": "account",
-                    "links": {
-                        "self": "https://example.com/accounts/def678"
-                    },
-                    "attributes": {
-                        "username": "john-doe"
-                    },
-                    "relationships": {
-                        "profile": {
-                            "links": {
-                                "related": "https://example.com/accounts/def678/profile"
-                            },
-                            "data": {
-                                "id": "def678-profile",
-                                "type": "profile"
-                            }
-                        }
-                    }
-                }
-            ]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-## User Account [/accounts/{id}]
+## Concrete Theme [/theme/{id}]
 
 + Parameters
+    + id
 
-    + id: abc4567 (required, string) - id of account
+### Retrieve Theme[GET]
++ Response 200 (application/json)
+    + Attributes (Themes)
 
-### Fetch [GET]
+### Edit Theme [PUT]
++ Request (application/json)
+    + Attributes([Themes])
++ Response 204 
 
-+ Request
+### Delete Theme [DELETE]
++ Response 204
 
+# Posts [/posts]
+
+## Retrieve All Posts [GET]
++ Response 200 (application/json)
+    + Attributes (array[Posts])
+
+## Add new Post [POST]
++ Request (application/json)
+    + Attributes([Posts])
++ Response 201 (application/json)
     + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/accounts/def678"
-            },
-            "data": {
-                "id": "def678",
-                "type": "account",
-                "attributes": {
-                    "username": "jane-doe",
-                }
-            },
-            "relationships": {
-                "profile": {
-                    "links": {
-                        "related": "https://example.com/accounts/def678/profile"
-                    },
-                    "data": {
-                        "id": "def678-profile",
-                        "type": "profile"
-                    }
-                }
-            }
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Update [PATCH]
-
-+ Request (application/vnd.api+json)
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
+    
+            Location: /posts/2
+            
     + Body
+    
+            + Attributes
+                + postid: 2 (number, required)
+                + content: xxx (string, required)
+                + themeid: 1 (number, required)
+                + addedby: user (string, required)
+                + addedat: `2014-11-11T08:40:51.620Z` (string)
 
-            {
-                "data": {
-                    "id": "abc1234",
-                    "type": "account",
-                    "attributes": {
-                        "newProperty": "value",
-                        "secureProperty": "wicked"
-                    }
-                }
-            }
-
-+ Response 204
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "'type' and 'id' provided don't match any existing document"
-            }]
-        }
-
-### Delete [DELETE]
-
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 204
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-## User Profile [/accounts/{id}/profile]
-
-All custom user data is stored in the profile.
+## Concrete Post [/posts/{id}]
 
 + Parameters
+    + id
 
-    + id: abc4567 (required, string) - id of account
+### Retrieve Post[GET]
++ Response 200 (application/json)
+    + Attributes (Posts)
 
-### Fetch [GET]
+### Edit Post [PUT]
++ Request (application/json)
+    + Attributes([Posts])
++ Response 204 
 
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 200 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/accounts/abcd123/profile"
-            },
-            "data": {
-                "id": "abcd123-profile",
-                "type": "profile",
-                "attributes": {
-                    "fullName": "Jane Doe"
-                }
-            }
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-### Update [PATCH]
-
-+ Request (application/vnd.api+json)
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-    + Body
-
-            {
-                "data": {
-                    "id": "abcd123-profile",
-                    "type": "profile",
-                    "attributes": {
-                        "property": "new value"
-                    }
-                }
-            }
-
+### Delete Post[DELETE]
 + Response 204
 
-+ Response 401 (application/vnd.api+json)
+# Responses [/responses]
 
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
+## Retrieve All Responses [GET]
++ Response 200 (application/json)
+    + Attributes (array[Responses])
 
-+ Response 401 (application/vnd.api+json)
+## Add new Response [POST]
++ Request (application/json)
+    + Attributes([Responses])
++ Response 201 (application/json)
+    + Headers
+    
+            Location: /responses/2
+            
+    + Body
+    
+            + Attributes
+                + responseid: 2 (number, required)
+                + rcontent: xxx (string, required)
+                + rootid: 1 (number, required)
+                + addedby: user (string, required)
+                + addedat: `2014-11-11T08:40:51.620Z` (string)
 
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
-
-+ Response 409 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "409",
-                "title": "Conflict",
-                "detail": "'type' and 'id' provided don't match any existing document"
-            }]
-        }
-
-## User Session [/accounts/{id}/sessions]
-
-Admins can manage sessions for all user accounts
+## Concrete Response [/responses/{id}]
 
 + Parameters
+    + id
 
-    + id: abc4567 (required, string) - id of account
+### Retrieve Response[GET]
++ Response 200 (application/json)
+    + Attributes (Responses)
 
-### Create [POST]
+### Edit Response [PUT]
++ Request (application/json)
+    + Attributes(Responses)
++ Response 204 
 
-+ Request
-
-    + Headers
-
-            Accept: application/vnd.api+json
-            Authorization: Bearer sessionid123
-
-+ Response 201 (application/vnd.api+json)
-
-        {
-            "links": {
-                "self": "https://example.com/accounts/abcd123/sessions/session123"
-            },
-            "data": {
-                "id": "session123",
-                "type": "session",
-                "relationships": {
-                    "account": {
-                        "links": {
-                            "related": "https://example.com/accounts/abcd123"
-                        },
-                        "data": {
-                            "id": "abcd123",
-                            "type": "account"
-                        }
-                    }
-                }   
-            }
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Authorization header missing"
-            }]
-        }
-
-+ Response 401 (application/vnd.api+json)
-
-        {
-            errors: [{
-                "status": "401",
-                "title": "Unauthorized",
-                "detail": "Session invalid"
-            }]
-        }
+### Delete Response[DELETE]
++ Response 204
